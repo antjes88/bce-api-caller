@@ -8,7 +8,7 @@ resource "google_service_account" "default" {
   display_name = "ECB API Caller Cloud Function SA"
 }
 
-resource "google_project_iam_binding" "project" {
+resource "google_project_iam_binding" "sql_client" {
   project = var.project_id
   role    = "roles/cloudsql.client"
 
@@ -17,7 +17,15 @@ resource "google_project_iam_binding" "project" {
   ]
 }
 
-# If needed creates GCP Bucket where source code zip file is going to be uploaded
+resource "google_project_iam_binding" "secret_accessor" {
+  project = var.project_id
+  role    = "roles/secretmanager.secretAccessor"
+
+  members = [
+    "serviceAccount:${google_service_account.default.email}",
+  ]
+}
+
 resource "google_storage_bucket" "source_code" {
   name                        = "ecb-api-caller-source-code-location"
   storage_class               = "STANDARD"
@@ -25,21 +33,18 @@ resource "google_storage_bucket" "source_code" {
   uniform_bucket_level_access = false
 }
 
-# Compress source code for GCP Function
 data "archive_file" "source" {
   type        = "zip"
   source_dir  = "${path.root}/cloud_function"
   output_path = "${path.root}/zip_to_cloud_function.zip"
 }
 
-# Upload source code to Bucket
 resource "google_storage_bucket_object" "zip" {
   name   = "cloud-function-source-code-for-${var.cloud_function_name}.zip"
   bucket = google_storage_bucket.source_code.name
   source = data.archive_file.source.output_path
 }
 
-# pubsub topic
 resource "google_pubsub_topic" "default" {
   name = "cloud-function-${var.cloud_function_name}"
 }
@@ -58,49 +63,51 @@ resource "google_cloud_scheduler_job" "default" {
   }
 }
 
-# Secrets definition
-data "google_secret_manager_secret_version" "database_name" {
-  secret = var.secret_database_name
-}
-
-data "google_secret_manager_secret_version" "port" {
-  secret = var.secret_port
-}
-
-data "google_secret_manager_secret_version" "server" {
-  secret = var.secret_server
-}
-
-data "google_secret_manager_secret_version" "db_user" {
-  secret = var.secret_db_user
-}
-
-data "google_secret_manager_secret_version" "db_password" {
-  secret = var.secret_db_password
-}
-
-# Create Cloud Function
 resource "google_cloudfunctions_function" "ecb" {
   name                  = var.cloud_function_name
-#  project               = var.project_id
+
   runtime               = "python38"
-  available_memory_mb   = 512
+  available_memory_mb   = 256
   timeout               = 120
   source_archive_bucket = google_storage_bucket.source_code.name
   source_archive_object = google_storage_bucket_object.zip.name
   entry_point           = var.function_entry_point
   service_account_email = google_service_account.default.email
+  max_instances         = 3
 
   event_trigger {
     event_type = "google.pubsub.topic.publish"
     resource   = google_pubsub_topic.default.name
   }
 
-  environment_variables = {
-    DATABASE_NAME = data.google_secret_manager_secret_version.database_name.secret_data
-    DATABASE_PORT_N = data.google_secret_manager_secret_version.port.secret_data
-    SERVER_HOST = data.google_secret_manager_secret_version.server.secret_data
-    USER_NAME = data.google_secret_manager_secret_version.db_user.secret_data
-    USER_PASSWORD = data.google_secret_manager_secret_version.db_password.secret_data
+  secret_environment_variables {
+    key        = "DATABASE_NAME"
+    project_id = var.project_id
+    secret     = var.secret_database_name
+    version    = "latest"
+  }
+  secret_environment_variables {
+    key        = "DATABASE_PORT_N"
+    project_id = var.project_id
+    secret     = var.secret_port
+    version    = "latest"
+  }
+  secret_environment_variables {
+    key        = "SERVER_HOST"
+    project_id = var.project_id
+    secret     = var.secret_server
+    version    = "latest"
+  }
+  secret_environment_variables {
+    key        = "USER_NAME"
+    project_id = var.project_id
+    secret     = var.secret_db_user
+    version    = "latest"
+  }
+  secret_environment_variables {
+    key        = "USER_PASSWORD"
+    project_id = var.project_id
+    secret     = var.secret_db_password
+    version    = "latest"
   }
 }
