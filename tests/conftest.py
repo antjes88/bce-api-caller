@@ -12,8 +12,9 @@ def db_conn():
     Returns: API to interact with database in a sql manner.
     """
     return postgres_sql_connector_factory(
-        vendor='gcp', host=os.environ['HOST'], database_name=os.environ['DATABASE_NAME'],
-        user_name=os.environ['USER_NAME'], user_password=os.environ['USER_PASSWORD'], port=os.environ['DATABASE_PORT'])
+        vendor='gcp', host=os.environ['SERVER_HOST'], database_name=os.environ['DATABASE_NAME'],
+        user_name=os.environ['USER_NAME'], user_password=os.environ['USER_PASSWORD'],
+        port=os.environ['DATABASE_PORT_N'])
 
 
 @pytest.fixture(scope='function')
