@@ -58,11 +58,11 @@ It is needed a _.env_ file with the next settings and credentials to connect to 
 as follows:
 
 ```
-HOST = 
+SERVER_HOST = 
 DATABASE_NAME = 
 USER_NAME = 
 USER_PASSWORD = 
-DATABASE_PORT = 
+DATABASE_PORT_N = 
 ```
 
 *In this case, host is just the IP address.
