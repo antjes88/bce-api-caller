@@ -8,22 +8,17 @@ resource "google_service_account" "default" {
   display_name = "ECB API Caller Cloud Function SA"
 }
 
-resource "google_project_iam_binding" "sql_client" {
+
+resource "google_project_iam_member" "sql_client" {
   project = var.project_id
   role    = "roles/cloudsql.client"
-
-  members = [
-    "serviceAccount:${google_service_account.default.email}",
-  ]
+  member  = "serviceAccount:${google_service_account.default.email}"
 }
 
-resource "google_project_iam_binding" "secret_accessor" {
+resource "google_project_iam_member" "secret_accessor" {
   project = var.project_id
   role    = "roles/secretmanager.secretAccessor"
-
-  members = [
-    "serviceAccount:${google_service_account.default.email}",
-  ]
+  member  = "serviceAccount:${google_service_account.default.email}"
 }
 
 resource "google_storage_bucket" "source_code" {
@@ -58,7 +53,7 @@ resource "google_cloud_scheduler_job" "default" {
     topic_name = google_pubsub_topic.default.id
     data = base64encode("Trigger Cloud Function")
     attributes = {
-      days_to_register = 10
+      days_to_register = 30
     }
   }
 }
