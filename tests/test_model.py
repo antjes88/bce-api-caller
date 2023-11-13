@@ -84,13 +84,10 @@ def test_ecb_rate_inequality(
         1,
     )
 
-    assert not (
-        model.EcbExchangeRate(
-            date_left, exchange_rate_left, currency_left, creation_date
-        )
-        == model.EcbExchangeRate(
-            date_right, exchange_rate_right, currency_right, creation_date
-        )
+    assert model.EcbExchangeRate(
+        date_left, exchange_rate_left, currency_left, creation_date
+    ) != model.EcbExchangeRate(
+        date_right, exchange_rate_right, currency_right, creation_date
     )
 
 
@@ -101,7 +98,7 @@ def test_ecb_rate_inequality_other(value):
     WHEN they are checked for equality
     THEN the result should be that both ecb rates are NOT equal
     """
-    assert not model.EcbExchangeRate(dt.datetime.now(), 0.1, "GBP") == value
+    assert model.EcbExchangeRate(dt.datetime.now(), 0.1, "GBP") != value
 
 
 def test_reach_ecb_api():

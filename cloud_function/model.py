@@ -83,7 +83,6 @@ class EcbApiCaller:
             total=3, status_forcelist=[429, 500, 502, 504], backoff_factor=0.1
         )
         adapter = HTTPAdapter(max_retries=retry)
-        session.mount("http://", adapter)
         session.mount("https://", adapter)
 
         ecb_url = (
