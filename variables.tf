@@ -16,7 +16,7 @@ variable "cloud_function_name" {
 
 variable "function_entry_point" {
   type        = string
-  default     = "func_entry_point"
+  default     = "function_entry_point"
   description = "Name of the function entry point for the Python solution at main.py"
 }
 
