@@ -1,12 +1,13 @@
-from ecb_exchange_rates import *
+import model
+import repository
+import services
 
 
 def func_entry_point(event, context):
     """
-    Entry point to the Python solution for the GCP Function Execution.
-    This function calls to ECB Api for as many days back as indicated on attribute days_to_register. Then transform the
-    response into a dataframe that is use as vector to populate the data into table bce.EuroaRatio at destination
-    database. Configuration and credential for database are indicated by environment variables.
+    Entry point function for ingesting ECB exchange rates into raw layer of the DW in BigQuery.
+    This function initializes a BigQueryRepository and an EcbApiCaller, then calls a service to fetch and load ECB
+    rates into BigQuery.
 
     Args:
          event: The dictionary with data specific to this type of event. The `@type` field maps to
@@ -21,19 +22,6 @@ def func_entry_point(event, context):
     Returns:
         None
     """
-
-    try:
-        days_to_register = int(event['attributes']['days_to_register'])
-        print("Calling to ECB Api")
-        response = call_to_ecb_api_exchange_rate(days_to_register)
-
-        print("Transforming response from ECB Api")
-        exchange_df = from_xml_to_dataframe(response.text)
-
-        print("Loading data to database")
-        load_to_database_eur_exchange_rate(exchange_df)
-
-        print("Process completed successfully")
-
-    except Exception as e:
-        print("Next error has occurred: %s" % e.__str__())
+    bq_repository = repository.BiqQueryRepository()
+    ecb_api_caller = model.EcbApiCaller(10)
+    services.source_ecb_exchange_rates(bq_repository, ["GBP", "USD"], ecb_api_caller)
