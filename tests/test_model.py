@@ -16,7 +16,9 @@ def test_ecb_rate_to_dict():
     currency = "GBP"
     creation_date = dt.datetime.now()
 
-    assert model.EcbExchangeRate(date, exchange_rate, currency, creation_date).to_dict() == {
+    assert model.EcbExchangeRate(
+        date, exchange_rate, currency, creation_date
+    ).to_dict() == {
         "date": date.strftime("%Y-%m-%d"),
         "exchange_rate": exchange_rate,
         "currency": currency,
@@ -83,8 +85,12 @@ def test_ecb_rate_inequality(
     )
 
     assert not (
-        model.EcbExchangeRate(date_left, exchange_rate_left, currency_left, creation_date)
-        == model.EcbExchangeRate(date_right, exchange_rate_right, currency_right, creation_date)
+        model.EcbExchangeRate(
+            date_left, exchange_rate_left, currency_left, creation_date
+        )
+        == model.EcbExchangeRate(
+            date_right, exchange_rate_right, currency_right, creation_date
+        )
     )
 
 

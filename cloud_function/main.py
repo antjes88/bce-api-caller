@@ -24,4 +24,4 @@ def func_entry_point(event, context):
     """
     bq_repository = repository.BiqQueryRepository()
     ecb_api_caller = model.EcbApiCaller(10)
-    services.source_ecb_exchange_rates(bq_repository, ['GBP', 'USD'], ecb_api_caller)
+    services.source_ecb_exchange_rates(bq_repository, ["GBP", "USD"], ecb_api_caller)

@@ -3,7 +3,9 @@ import repository
 
 
 def source_ecb_exchange_rates(
-        repo: repository.AbstractRepository, currencies: list[str], ecb_api_caller: model.EcbApiCaller
+    repo: repository.AbstractRepository,
+    currencies: list[str],
+    ecb_api_caller: model.EcbApiCaller,
 ):
     """
     Fetches ECB rates using an Ecb Api and loads them into a data repository.

@@ -15,7 +15,9 @@ def test_source_ecb_rates(repository_with_ecb_rates, fake_ecb_api):
 
     expected_ecb_rates = expected_ecb_rates + ECB_RATES
 
-    query_job = bq_repository.client.query(f"SELECT * FROM {os.environ['DATASET']}.{os.environ['DESTINATION_TABLE']}")
+    query_job = bq_repository.client.query(
+        f"SELECT * FROM {os.environ['DATASET']}.{os.environ['DESTINATION_TABLE']}"
+    )
     rows = query_job.result()
     results_ecb_rates = []
     for row in rows:

@@ -98,7 +98,9 @@ class EcbApiCaller:
         return session.get(ecb_url % (date_from, date_to))
 
     @staticmethod
-    def xml_to_ecb_rates(response: req.models.Response, currency: str) -> list[EcbExchangeRate]:
+    def xml_to_ecb_rates(
+        response: req.models.Response, currency: str
+    ) -> list[EcbExchangeRate]:
         """
         Converts an HTTP response from ECB API to a list of EcbExchangeRate instances.
 
@@ -124,12 +126,16 @@ class EcbApiCaller:
                 date, exchange_rate = None, None
                 for child in obs.iter():
                     if "ObsDimension" in child.tag:
-                        date = dt.datetime.strptime(child.attrib["value"], "%Y-%m-%d").date()
+                        date = dt.datetime.strptime(
+                            child.attrib["value"], "%Y-%m-%d"
+                        ).date()
                     elif "ObsValue" in child.tag:
                         exchange_rate = float(child.attrib["value"])
 
                 if date and exchange_rate:
-                    ecb_exchange_rates.append(EcbExchangeRate(date, exchange_rate, currency))
+                    ecb_exchange_rates.append(
+                        EcbExchangeRate(date, exchange_rate, currency)
+                    )
 
         return ecb_exchange_rates
 

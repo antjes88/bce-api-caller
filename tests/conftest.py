@@ -2,7 +2,7 @@ import pytest
 from cloud_function.repository import BiqQueryRepository
 from cloud_function import model
 import os
-from tests.data.ecb_rates import ECB_RATES
+from tests.data.ecb_exchange_rates import ECB_EXCHANGE_RATES
 import datetime as dt
 
 
@@ -34,13 +34,14 @@ def repository_with_ecb_rates(bq_repository):
     Returns:
         instance of BiqQueryRepository() where a cashflow table has been created
     """
-    bq_repository.load_ecb_exchange_rates(ECB_RATES)
+    bq_repository.load_ecb_exchange_rates(ECB_EXCHANGE_RATES)
 
-    yield bq_repository, ECB_RATES
+    yield bq_repository, ECB_EXCHANGE_RATES
 
     bq_repository.client.delete_table(
         os.environ["DATASET"] + "." + os.environ["DESTINATION_TABLE"]
     )
+
 
 @pytest.fixture(scope="function")
 def fake_ecb_api():
