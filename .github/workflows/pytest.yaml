@@ -26,7 +26,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f cloud_function/requirements.txt ]; then pip install -r cloud_function/requirements.txt; fi
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           python -m pip install pytest==7.4.3
           python -m pip install python-dotenv==0.14.0
       - name: Test with pytest
