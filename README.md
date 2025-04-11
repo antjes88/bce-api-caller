@@ -3,6 +3,35 @@
 This is a solution designed to interact with the European Central Bank (ECB) API for fetching exchange rates. 
 This Ecb Exchange Rates are latter appended into a destination table in BigQuery.
 
+## Development environment
+
+Recommended development enviroment is VSCode Dev Containers extension. The configuration and set up of this dev container is already defined in `.devcontainer/devcontainer.json` so setting up a new containerised dev environment on your machine is straight-forward.
+
+Pre-requisites:
+- docker installed on your machine and available on your `PATH`
+- [Visual Studio Code](https://code.visualstudio.com/) (VSCode) installed on your machine
+- [Dev Containers](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers) vscode extension installed
+
+Steps:
+- In VSCode go to `View -> Command Pallet` and search for the command `>Dev Containers: Rebuild and Reopen in Container`
+
+The first time you open the workspace within the container it'll take a few minutes to build the container, setup the virtual env and then login to gcloud. At the end of this process you will be presented with a url and asked to provide an authorization. Simply follow the url, permit the access and copy the auth code provided at the end back into to the terminal and press enter. 
+
+### Configure Git 
+
+For seamless Git usage in a Dev Container, create a local script at .devcontainer/git_config.sh (do not push this file to the repository) and set your GitHub account name and email:
+
+```bash
+#!/bin/bash
+
+git config --global user.name "your github account name"
+git config --global user.email "your github account email"
+```
+
+### Local Execution
+
+To execute the solution, use the following command in a Bash terminal `bce-api-caller` inside the devcontainer. Executing this command will prompt a message providing the available arguments to perform different actions. You can explore additional details and options by using the --help tag.
+
 ## Terraform Code
 
 The provided Terraform code automates the deployment of the python solution to fetch exchange rates from ECB API 
