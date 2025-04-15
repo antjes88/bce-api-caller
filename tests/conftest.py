@@ -1,20 +1,22 @@
 import pytest
-from cloud_function.repository import BiqQueryRepository
-from cloud_function import model
+from src import model, destination_repository, source_repository
 import os
 from tests.data.ecb_exchange_rates import ECB_EXCHANGE_RATES
 import datetime as dt
+from src.utils.gcp_clients import create_bigquery_client
 
 
 @pytest.fixture(scope="session")
 def bq_repository():
     """
-    Fixture that returns instance of BiqQueryRepository() instantiated with test parameters
+    Fixture that returns instance of BiqQueryDestinationRepository
+    instantiated with test parameters.
 
     Returns:
-        instance of BiqQueryRepository()
+        instance of BiqQueryDestinationRepository
     """
-    bq_repository = BiqQueryRepository(project=os.environ["PROJECT"])
+    client = create_bigquery_client(os.environ["PROJECT"])
+    bq_repository = destination_repository.BiqQueryDestinationRepository(client)
     bq_repository.ecb_exchange_rates_destination = (
         os.environ["DATASET"] + "." + os.environ["DESTINATION_TABLE"]
     )
@@ -25,14 +27,14 @@ def bq_repository():
 @pytest.fixture(scope="function")
 def repository_with_ecb_rates(bq_repository):
     """
-    Fixture that creates an ecb rates table and loads some dummy table on it on destination BigQuery project.
-    Deletes table during tear down.
+    Fixture that creates an ecb rates table and loads some dummy table
+    on it on destination BigQuery project. Deletes table during tear down.
 
     Args:
-        bq_repository: instance of BiqQueryRepository()
+        bq_repository: instance of BiqQueryDestinationRepository
 
     Returns:
-        instance of BiqQueryRepository() where a cashflow table has been created
+        instance of BiqQueryDestinationRepository where a cashflow table has been created
     """
     bq_repository.load_ecb_exchange_rates(ECB_EXCHANGE_RATES)
 
@@ -58,7 +60,7 @@ def fake_ecb_api():
         "GBP": "tests/data/xml_ecb_test.xml",
         "USD": "tests/data/xml_ecb_test.xml",
     }
-    fake_ecb_api_caller = model.EcbApiCallerFake(api_responses)
+    fake_ecb_api_caller = source_repository.EcbApiCallerFake(api_responses)
 
     expected_ecb_rates = [
         model.EcbExchangeRate(dt.date(2023, 11, 6), 0.8664, "GBP"),

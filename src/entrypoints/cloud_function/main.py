@@ -1,6 +1,5 @@
-import model
-import repository
-import services
+from src import source_repository, destination_repository, services
+from src.utils.gcp_clients import create_bigquery_client
 
 
 def function_entry_point(event, context):
@@ -19,9 +18,8 @@ def function_entry_point(event, context):
                   `google.pubsub.topic.publish`, and `resource` which is a dictionary that describes the service
                   API endpoint pubsub.googleapis.com, the triggering topic's name, and the triggering event type
                   `type.googleapis.com/google.pubsub.v1.PubsubMessage`.
-    Returns:
-        None
     """
-    bq_repository = repository.BiqQueryRepository()
-    ecb_api_caller = model.EcbApiCaller(10)
+    client = create_bigquery_client()
+    bq_repository = destination_repository.BiqQueryDestinationRepository(client)
+    ecb_api_caller = source_repository.EcbApiCaller(10)
     services.source_ecb_exchange_rates(bq_repository, ["GBP", "USD"], ecb_api_caller)

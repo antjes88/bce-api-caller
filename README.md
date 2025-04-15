@@ -68,7 +68,7 @@ requirements.txt. In case you do not have such environment, you can create it as
  
 ```
 conda create -n [] python=3.10.0 pip
-pip install -r cloud_function/requirements.txt
+pip install -r requirements.txt
 ```
 
 You also need to install pytest==7.4.3 & python-dotenv==0.14.0

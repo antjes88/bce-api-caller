@@ -1,4 +1,4 @@
-from cloud_function import model
+from src import model
 import os
 
 

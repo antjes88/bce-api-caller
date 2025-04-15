@@ -6,7 +6,7 @@
         "target": "devcontainer"
     },
     "remoteEnv": {
-        "PYTHONPATH": "/workspaces/bce-api-caller/cloud_function/entrypoints:${containerEnv:PYTHONPATH}",
+        "PYTHONPATH": "/workspaces/bce-api-caller/src/entrypoints:${containerEnv:PYTHONPATH}",
         "PATH": "/usr/app/google-cloud-sdk/bin:/workspaces/bce-api-caller/cli/bin:${containerEnv:PATH}",
         "ISDEVCONTAINER": "true"
     },
