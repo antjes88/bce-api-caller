@@ -18,4 +18,4 @@ def env_var_loader(file_name: str, file_path: Optional[str] = None):
         env_path = os.path.join(wd, file_name)
 
     if os.path.isfile(env_path):
-        load_dotenv(dotenv_path=env_path)
+        load_dotenv(dotenv_path=env_path, override=True)
