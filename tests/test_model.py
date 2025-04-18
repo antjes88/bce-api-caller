@@ -3,30 +3,35 @@ import datetime as dt
 import pytest
 
 
-def test_ecb_rate_equality():
+def test_exchange_rates_equality():
     """
-    GIVEN 2 ecb rates that have same
+    GIVEN 2 exchange rates that are equal for: date, exchange_rate,
+      currency_pair and source
     WHEN they are checked for equality
-    THEN the result should be that both ecb rates are equal
+    THEN the result should be that exchange rates are equal no matter that
+        creation date is different
     """
     date = dt.date(2021, 10, 10)
     exchange_rate = 0.05
-    currency = "GBP"
+    currency_pair = model.CurrencyPair("GBP", "USD")
+    source = "test"
 
-    assert model.EcbExchangeRate(
-        date,
-        exchange_rate,
-        currency,
-        dt.datetime(
+    assert model.ExchangeRate(
+        date=date,
+        exchange_rate=exchange_rate,
+        currency_pair=currency_pair,
+        source=source,
+        creation_date=dt.datetime(
             1990,
             1,
             1,
         ),
-    ) == model.EcbExchangeRate(
-        date,
-        exchange_rate,
-        currency,
-        dt.datetime(
+    ) == model.ExchangeRate(
+        date=date,
+        exchange_rate=exchange_rate,
+        currency_pair=currency_pair,
+        source=source,
+        creation_date=dt.datetime(
             2020,
             12,
             12,
@@ -35,25 +40,66 @@ def test_ecb_rate_equality():
 
 
 @pytest.mark.parametrize(
-    "date_left, date_right, exchange_rate_left, exchange_rate_right, currency_left, currency_right",
+    "date_left, date_right, exchange_rate_left, exchange_rate_right"
+    ", currency_pair_left, currency_pair_right, source_left, source_right",
     [
-        (dt.datetime(2021, 10, 10), dt.datetime(1990, 10, 10), 0.1, 0.1, "GBP", "GBP"),
-        (dt.datetime(1990, 10, 10), dt.datetime(1990, 10, 10), 0.1, 0.2, "GBP", "GBP"),
-        (dt.datetime(1990, 10, 10), dt.datetime(1990, 10, 10), 0.2, 0.2, "USD", "GBP"),
+        (
+            dt.datetime(2021, 10, 10),
+            dt.datetime(1990, 10, 10),
+            0.1,
+            0.1,
+            model.CurrencyPair("GBP", "USD"),
+            model.CurrencyPair("GBP", "USD"),
+            "test",
+            "test",
+        ),
+        (
+            dt.datetime(1990, 10, 10),
+            dt.datetime(1990, 10, 10),
+            0.1,
+            0.2,
+            model.CurrencyPair("GBP", "USD"),
+            model.CurrencyPair("GBP", "USD"),
+            "test",
+            "test",
+        ),
+        (
+            dt.datetime(1990, 10, 10),
+            dt.datetime(1990, 10, 10),
+            0.2,
+            0.2,
+            model.CurrencyPair("GBP", "USD"),
+            model.CurrencyPair("GBP", "EUR"),
+            "test",
+            "test",
+        ),
+        (
+            dt.datetime(1990, 10, 10),
+            dt.datetime(1990, 10, 10),
+            0.2,
+            0.2,
+            model.CurrencyPair("GBP", "USD"),
+            model.CurrencyPair("GBP", "USD"),
+            "test",
+            "another",
+        ),
     ],
 )
-def test_ecb_rate_inequality(
-    date_left,
-    date_right,
-    exchange_rate_left,
-    exchange_rate_right,
-    currency_left,
-    currency_right,
+def test_exchange_rate_inequality(
+    date_left: dt.datetime,
+    date_right: dt.datetime,
+    exchange_rate_left: float,
+    exchange_rate_right: float,
+    currency_pair_left: model.CurrencyPair,
+    currency_pair_right: model.CurrencyPair,
+    source_left: str,
+    source_right: str,
 ):
     """
-    GIVEN 2 ecb rates with different dates, exchange rates or currency
+    GIVEN 2 exchange rates with different: date, exchange_rate,
+      from_currency, to_currency and source
     WHEN they are checked for equality
-    THEN the result should be that both ecb rates are NOT equal
+    THEN the result should be that exchange rates are NOT equal
     """
     creation_date = dt.datetime(
         1990,
@@ -61,18 +107,92 @@ def test_ecb_rate_inequality(
         1,
     )
 
-    assert model.EcbExchangeRate(
-        date_left, exchange_rate_left, currency_left, creation_date
-    ) != model.EcbExchangeRate(
-        date_right, exchange_rate_right, currency_right, creation_date
+    assert model.ExchangeRate(
+        date=date_left,
+        exchange_rate=exchange_rate_left,
+        currency_pair=currency_pair_left,
+        source=source_left,
+        creation_date=creation_date,
+    ) != model.ExchangeRate(
+        date=date_right,
+        exchange_rate=exchange_rate_right,
+        currency_pair=currency_pair_right,
+        source=source_right,
+        creation_date=creation_date,
     )
 
 
 @pytest.mark.parametrize("value", [1, "string", 0.1, dt.datetime.now()])
-def test_ecb_rate_inequality_other(value):
+def test_exchange_rate_inequality_other(value):
     """
-    GIVEN an ecb rates and another data structure
+    GIVEN an exchange rates and another data structure
     WHEN they are checked for equality
-    THEN the result should be that both ecb rates are NOT equal
+    THEN the result should be that exchange rates are NOT equal
     """
-    assert model.EcbExchangeRate(dt.datetime.now(), 0.1, "GBP") != value
+    assert (
+        model.ExchangeRate(
+            date=dt.datetime.now(),
+            exchange_rate=0.1,
+            currency_pair=model.CurrencyPair("GBP", "USD"),
+            source="test",
+        )
+        != value
+    )
+
+
+@pytest.mark.parametrize(
+    "base, quote, should_raise",
+    [
+        ("USD", "EUR", False),
+        ("GBP", "USD", False),
+        ("USD", "USD", True),
+        ("Usd", "eur", False),
+        ("GbP", "USd", False),
+    ],
+)
+def test_currency_pair_initialization(base: str, quote: str, should_raise: bool):
+    """
+    GIVEN base and quote currencies
+    WHEN a CurrencyPair is initialized
+    THEN it should raise a ValueError if base and quote are the same,
+            otherwise it should initialize successfully
+    """
+    if should_raise:
+        with pytest.raises(ValueError):
+            model.CurrencyPair(base, quote)
+    else:
+        currency_pair = model.CurrencyPair(base, quote)
+        assert currency_pair.base == base.upper()
+        assert currency_pair.quote == quote.upper()
+
+
+def test_currency_pair_equality():
+    """
+    GIVEN two CurrencyPair instances with the same base and quote currencies
+    WHEN they are compared for equality
+    THEN they should be equal
+    """
+    pair1 = model.CurrencyPair("USD", "EUR")
+    pair2 = model.CurrencyPair("USD", "EUR")
+    assert pair1 == pair2
+
+
+def test_currency_pair_inequality():
+    """
+    GIVEN two CurrencyPair instances with different base or quote currencies
+    WHEN they are compared for equality
+    THEN they should not be equal
+    """
+    pair1 = model.CurrencyPair("USD", "EUR")
+    pair2 = model.CurrencyPair("GBP", "USD")
+    assert pair1 != pair2
+
+
+def test_currency_pair_string_representation():
+    """
+    GIVEN a CurrencyPair instance
+    WHEN it is converted to a string
+    THEN it should return the string representation in the format 'base/quote'
+    """
+    pair = model.CurrencyPair("USD", "EUR")
+    assert str(pair) == "USD/EUR"

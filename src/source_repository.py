@@ -5,38 +5,42 @@ from urllib3.util.retry import Retry
 import requests as req
 import requests_mock
 import datetime as dt
+from typing import List
 
 from src import model
 
 
-class SourceAbstractRepository(ABC):
+class AbstractSourceRepository(ABC):
     """
     An abstract base class for source repository interfaces that define methods to interact with a
-    source data storage in relation to European Central Bank Exchange Rates.
+    source data storage from where to extract Exchange Rates.
 
     Methods:
-        get_ecb_rates(self, currencies: list[str]) -> list[model.EcbExchangeRate]:
-            Retrieves ECB exchange rates for a list of currencies.
+        get_exchange_rates(currency_pairs: List[model.CurrencyPair]) -> list[model.ExchangeRate]:
+            Retrieves exchange rates for a list of currency pairs.
     """
 
     @abstractmethod
-    def get_ecb_rates(self, currencies: list[str]) -> list[model.EcbExchangeRate]:
+    def get_exchange_rates(
+        self, currency_pairs: List[model.CurrencyPair]
+    ) -> list[model.ExchangeRate]:
         """
-        Retrieves ECB exchange rates for a list of currencies relative to the Euro.
+        Retrieves exchange rates for a list of currency pairs.
 
         Args:
-            currencies (list[str]): List of currency codes for which to retrieve exchange rates.
+            currency_pairs (List[model.CurrencyPair]):
+                currency pair consisting of a base currency and a quote currency.
         Returns:
-            list[model.EcbExchangeRate]: A list of EcbExchangeRate instances.
+            list[model.ExchangeRate]: A list of ExchangeRate instances.
         """
         raise NotImplementedError
 
 
-class EcbApiCaller(SourceAbstractRepository):
+class EcbApiCaller(AbstractSourceRepository):
     """
-    Concrete implementation of SourceAbstractRepository to interact with the ECB API.
+    Concrete implementation of AbstractSourceRepository to interact with the ECB API.
     This class provides methods to make API calls to the European Central Bank (ECB) API
-    and process the XML response into a list of EcbExchangeRate instances.
+    and process the XML response into a list of ExchangeRate instances.
 
     Args:
         days_to_register (int): Number of days to consider when making the API call. Default is 10.
@@ -44,22 +48,24 @@ class EcbApiCaller(SourceAbstractRepository):
         days_to_register (int): Number of days to consider when making the API call. Default is 10.
     Methods:
         _call_to_ecb_api_exchange_rate(currency: str) -> Response:
-            Calls the ECB API to get exchange rates for a specific currency.
-        _xml_to_ecb_rates(response: req.models.Response, currency: str) -> list[EcbExchangeRate]:
-            Converts an XML response from ECB API to a list of EcbExchangeRate instances.
-        get_ecb_rates(currencies: list[str]) -> list[EcbExchangeRate]:
-            Retrieves ECB exchange rates for a list of currencies.
+            Calls the ECB API to get exchange rates for a specific currency pair.
+        _xml_to_ecb_rates(response: req.models.Response, currency: str) -> list[model.ExchangeRate]:
+            Converts an XML response from ECB API to a list of ExchangeRate instances.
+        get_exchange_rates(currency_pairs: List[model.CurrencyPair]) -> list[model.ExchangeRate]:
+            Retrieves exchange rates for a list of currency pairs.
     """
 
     def __init__(self, days_to_register: int = 10):
         self.days_to_register = days_to_register
 
-    def _call_to_ecb_api_exchange_rate(self, currency: str) -> req.models.Response:
+    def _call_to_ecb_api_exchange_rate(
+        self, currency_pair: model.CurrencyPair
+    ) -> req.models.Response:
         """
-        Calls the ECB API to get exchange rates for a specific currency.
+        Calls the ECB API to get exchange rates for a specific currency pair.
 
         Args:
-            currency (str): The currency code for which to retrieve exchange rates.
+            currency_pair (model.CurrencyPair): The currency pair consisting to get exchange rates for.
         Returns:
             Response: The HTTP response object.
         """
@@ -71,10 +77,10 @@ class EcbApiCaller(SourceAbstractRepository):
         session.mount("https://", adapter)
 
         ecb_url = (
-            f"https://sdw-wsrest.ecb.europa.eu/service/data/EXR/"
-            f"D.{currency}.EUR.SP00.A/?startPeriod=%s&endPeriod=%s"
+            f"https://data-api.ecb.europa.eu/service/data/EXR/"
+            f"D.{currency_pair.quote}.{currency_pair.base}.SP00.A"
+            f"?startPeriod=%s&endPeriod=%s"
         )
-        print(f"ecb_url: {ecb_url}")
         date_from = str(
             dt.datetime.date(dt.datetime.now()) - dt.timedelta(self.days_to_register)
         )
@@ -84,18 +90,19 @@ class EcbApiCaller(SourceAbstractRepository):
 
     @staticmethod
     def _xml_to_ecb_rates(
-        response: req.models.Response, currency: str
-    ) -> list[model.EcbExchangeRate]:
+        response: req.models.Response, currency_pair: model.CurrencyPair
+    ) -> list[model.ExchangeRate]:
         """
-        Converts an HTTP response from ECB API to a list of EcbExchangeRate instances.
+        Converts an HTTP response from ECB API to a list of ExchangeRate instances.
 
         Args:
             response (req.models.Response): HTTP response from the ECB API.
-            currency (str): The currency code for which rates are being processed.
+            currency_pair (model.CurrencyPair): The currency pair from which exchange rates
+                have been extracted.
         Returns:
-            list[EcbExchangeRate]: A list of EcbExchangeRate instances.
+            list[ExchangeRate]: A list of ExchangeRate instances.
         """
-        ecb_exchange_rates = []
+        exchange_rates = []
         root = Et.fromstring(response.text)
         for series in root.iter(
             "{http://www.sdmx.org/resources/sdmxml/schemas/v2_1/data/generic}Series"
@@ -118,34 +125,49 @@ class EcbApiCaller(SourceAbstractRepository):
                         exchange_rate = float(child.attrib["value"])
 
                 if date and exchange_rate:
-                    ecb_exchange_rates.append(
-                        model.EcbExchangeRate(date, exchange_rate, currency)
+                    exchange_rates.append(
+                        model.ExchangeRate(
+                            date=date,
+                            exchange_rate=exchange_rate,
+                            currency_pair=currency_pair,
+                            source="ECB API",
+                        )
                     )
 
-        return ecb_exchange_rates
+        return exchange_rates
 
-    def get_ecb_rates(self, currencies: list[str]) -> list[model.EcbExchangeRate]:
+    def get_exchange_rates(
+        self, currency_pairs: List[model.CurrencyPair]
+    ) -> list[model.ExchangeRate]:
         """
-        Retrieves ECB exchange rates for a list of currencies.
+        Retrieves exchange rates for a list of currency pairs.
 
         Args:
-            currencies (list[str]): List of currency codes for which to retrieve exchange rates.
+            currency_pairs (List[model.CurrencyPair]):
+                List of currency pairs consisting of a base currency and a quote currency.
         Returns:
-            list[EcbExchangeRate]: A list of EcbExchangeRate instances.
+            list[model.ExchangeRate]: A list of ExchangeRate instances.
         """
-        ecb_exchange_rates = []
-        for currency in currencies:
-            response = self._call_to_ecb_api_exchange_rate(currency)
+        for currency_pair in currency_pairs:
+            if currency_pair.base != "EUR":
+                raise ValueError(
+                    "Base currency must be EUR for ECP API. "
+                    "Please use the correct currency pair."
+                )
+
+        exchange_rates = []
+        for currency_pair in currency_pairs:
+            response = self._call_to_ecb_api_exchange_rate(currency_pair)
 
             if response.status_code != 200:
                 raise ValueError(
-                    f"ECB API returned status code {response.status_code} for currency {currency}"
+                    f"ECB API returned status code {response.status_code} for currency pair {currency_pair}"
                 )
 
-            for ecb_exchange_rate in self._xml_to_ecb_rates(response, currency):
-                ecb_exchange_rates.append(ecb_exchange_rate)
+            for exchange_rate in self._xml_to_ecb_rates(response, currency_pair):
+                exchange_rates.append(exchange_rate)
 
-        return ecb_exchange_rates
+        return exchange_rates
 
 
 class EcbApiCallerFake(EcbApiCaller):
@@ -162,32 +184,35 @@ class EcbApiCallerFake(EcbApiCaller):
     Methods:
         _call_to_ecb_api_exchange_rate(currency: str) -> Response:
             Overrides the parent method to return a fake response based on the provided API responses.
-        _xml_to_ecb_rates(response: req.models.Response, currency: str) -> list[EcbExchangeRate]:
-            Converts an XML response from ECB API to a list of EcbExchangeRate instances.
-        get_ecb_rates(currencies: list[str]) -> list[EcbExchangeRate]:
-            Retrieves ECB exchange rates for a list of currencies.
+        _xml_to_ecb_rates(response: req.models.Response, currency: str) -> list[model.ExchangeRate]:
+            Converts an XML response from ECB API to a list of ExchangeRate instances.
+        get_exchange_rates(currency_pairs: List[model.CurrencyPair]) -> list[model.ExchangeRate]:
+            Retrieves exchange rates for a list of currency pairs.
     """
 
     def __init__(self, api_responses: dict[str, str], days_to_register: int = 10):
         super().__init__(days_to_register=days_to_register)
         self.api_responses = api_responses
 
-    def _call_to_ecb_api_exchange_rate(self, currency: str) -> req.models.Response:
+    def _call_to_ecb_api_exchange_rate(
+        self, currency_pair: model.CurrencyPair
+    ) -> req.models.Response:
         """
         Overrides the parent method to return a fake response based on the provided API responses.
 
         Args:
-            currency (str): The currency code for which to retrieve exchange rates.
+            currency_pairs (model.CurrencyPair):
+                currency pair consisting of a base currency and a quote currency.
         Returns:
             Response: The fake HTTP response object.
         """
-        url = "https://sdw-wsrest.ecb.europa.eu"
-        if currency not in self.api_responses.keys():
+        url = "https://data-api.ecb.europa.eu"
+        if currency_pair.quote not in self.api_responses.keys():
             with requests_mock.Mocker() as mocker:
                 mocker.get(url, text="not valid", status_code=404)
                 response = req.get(url)
         else:
-            with open(self.api_responses[currency], "r") as f:
+            with open(self.api_responses[currency_pair.quote], "r") as f:
                 response_text = f.read()
             with requests_mock.Mocker() as mocker:
                 mocker.get(url, text=response_text, status_code=200)

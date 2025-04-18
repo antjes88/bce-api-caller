@@ -4,71 +4,77 @@ from typing import List
 from src import model
 
 
-class DestinationAbstractRepository(ABC):
+class AbstractDestinationRepository(ABC):
     """
     An abstract base class for destination repository interfaces that define methods to interact with a
-    destination data storage in relation to European Central Bank Exchange Rates.
+    destination data storage in relation to Exchange Rates.
 
     Methods:
-        load_ecb_exchange_rates(List[model.EcbExchangeRate]):
-            List of EcbExchangeRate instances to be loaded into the repository.
+        load_exchange_rates(List[model.ExchangeRate]):
+            interface to load Exchange Rates into the destination repository.
     """
 
     @abstractmethod
-    def load_ecb_exchange_rates(self, ecb_exchange_rates: List[model.EcbExchangeRate]):
+    def load_exchange_rates(self, exchange_rates: List[model.ExchangeRate]):
         """
-        Abstract method to define the interface for loading ECB Exchange Rates into the
+        Abstract method to define the interface to load Exchange Rates into the
         destination repository.
 
         Args:
-            ecb_exchange_rates (List[model.EcbExchangeRate]):
-                List of EcbExchangeRate instances to be loaded into the repository.
+            exchange_rates (List[model.ExchangeRate]):
+                List of ExchangeRate instances to be loaded into the repository.
         """
         raise NotImplementedError
 
 
-class BiqQueryDestinationRepository(DestinationAbstractRepository):
+class BiqQueryDestinationRepository(AbstractDestinationRepository):
     """
-    A concrete implementation of the DestinationAbstractRepository to interact with Google BigQuery.
-    This class is designed to load ECB Exchange Rates data into Google BigQuery.
+    A concrete implementation of the AbstractDestinationRepository to interact with Google BigQuery.
+    This class is designed to load Exchange Rates data into Google BigQuery.
 
     Args:
         client (google.cloud.bigquery.Client): The BigQuery client instance.
     Attributes:
         client (google.cloud.bigquery.Client): The BigQuery client instance.
-        ecb_exchange_rates_destination (str): The destination table for ECB exchange rates in BigQuery.
+        exchange_rates_destination (str): The destination table for exchange rates in BigQuery.
     Methods:
-        load_ecb_exchange_rates(ecb_rates: list[model.EcbExchangeRate]):
-            Load ECB exchange rates into BigQuery table indicated by attribute ecb_exchange_rates_destination.
+        load_exchange_rates(List[model.ExchangeRate]):
+            interface to load Exchange Rates into bq table indicated
+            by attribute exchange_rates_destination.
     """
 
     def __init__(self, client: bigquery.Client):
         self.client = client
-        self.ecb_exchange_rates_destination = "raw.ecb_exchange_rates"
+        self.exchange_rates_destination = "raw.exchange_rates"
 
-    def load_ecb_exchange_rates(self, ecb_exchange_rates: List[model.EcbExchangeRate]):
+    def load_exchange_rates(self, exchange_rates: List[model.ExchangeRate]):
         """
-        Load ECB exchange rates into BigQuery table indicated by attribute ecb_exchange_rates_destination.
+        interface to load Exchange Rates into bq table indicatedby attribute
+        exchange_rates_destination.
 
         Args:
-            ecb_exchange_rates (List[model.EcbExchangeRate]): List of EcbExchangeRate instances to be loaded
-                into BigQuery.
+            exchange_rates (List[model.ExchangeRate]):
+                List of ExchangeRate instances to be loaded into BigQuery.
         """
 
         dictify = [
             {
-                "date": ecb_rate.date.strftime("%Y-%m-%d"),
-                "exchange_rate": ecb_rate.exchange_rate,
-                "currency": ecb_rate.currency,
-                "creation_date": ecb_rate.creation_date.strftime("%Y-%m-%d %H:%M:%S"),
+                "date": exchange_rate.date.strftime("%Y-%m-%d"),
+                "exchange_rate": exchange_rate.exchange_rate,
+                "base_currency": exchange_rate.currency_pair.base,
+                "quote_currency": exchange_rate.currency_pair.quote,
+                "source": exchange_rate.source,
+                "creation_date": exchange_rate.creation_date.strftime(
+                    "%Y-%m-%d %H:%M:%S"
+                ),
             }
-            for ecb_rate in ecb_exchange_rates
+            for exchange_rate in exchange_rates
         ]
         job_config = bigquery.LoadJobConfig(
             write_disposition=bigquery.WriteDisposition.WRITE_APPEND,
             source_format=bigquery.SourceFormat.NEWLINE_DELIMITED_JSON,
         )
         load_job = self.client.load_table_from_json(
-            dictify, self.ecb_exchange_rates_destination, job_config=job_config
+            dictify, self.exchange_rates_destination, job_config=job_config
         )
         load_job.result()

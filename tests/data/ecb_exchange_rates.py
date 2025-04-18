@@ -1,11 +1,37 @@
 from src import model
+from typing import List
 import datetime as dt
 
 
-ECB_EXCHANGE_RATES = [
-    model.EcbExchangeRate(dt.date(2023, 10, 5), 0.866, "GBP"),
-    model.EcbExchangeRate(dt.date(2023, 10, 6), 0.868, "GBP"),
-    model.EcbExchangeRate(dt.date(2023, 10, 7), 0.870, "GBP"),
-    model.EcbExchangeRate(dt.date(2023, 10, 8), 0.872, "GBP"),
-    model.EcbExchangeRate(dt.date(2023, 10, 9), 0.873, "GBP"),
+EXCHANGE_RATES: List[model.ExchangeRate] = [
+    model.ExchangeRate(
+        date=dt.date(2023, 10, 5),
+        exchange_rate=0.866,
+        currency_pair=model.CurrencyPair("EUR", "GBP"),
+        source="ECB API",
+    ),
+    model.ExchangeRate(
+        date=dt.date(2023, 10, 6),
+        exchange_rate=0.868,
+        currency_pair=model.CurrencyPair("EUR", "GBP"),
+        source="ECB API",
+    ),
+    model.ExchangeRate(
+        date=dt.date(2023, 10, 7),
+        exchange_rate=0.870,
+        currency_pair=model.CurrencyPair("EUR", "GBP"),
+        source="ECB API",
+    ),
+    model.ExchangeRate(
+        date=dt.date(2023, 10, 8),
+        exchange_rate=0.872,
+        currency_pair=model.CurrencyPair("EUR", "GBP"),
+        source="ECB API",
+    ),
+    model.ExchangeRate(
+        date=dt.date(2023, 10, 9),
+        exchange_rate=0.873,
+        currency_pair=model.CurrencyPair("EUR", "GBP"),
+        source="ECB API",
+    ),
 ]

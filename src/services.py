@@ -1,21 +1,21 @@
-from src import source_repository, destination_repository
+from src import source_repository, destination_repository, model
 
 
-def source_ecb_exchange_rates(
-    destination_repository: destination_repository.DestinationAbstractRepository,
-    currencies: list[str],
-    source_repository: source_repository.SourceAbstractRepository,
+def source_exchange_rates(
+    destination_repository: destination_repository.AbstractDestinationRepository,
+    currency_pairs: list[model.CurrencyPair],
+    source_repository: source_repository.AbstractSourceRepository,
 ):
     """
-    Fetches ECB rates from source repository and loads them into destination repository.
+    Fetches exchange rates from source repository and loads them into destination repository.
 
     Args:
-        destination_repository (destination_repository.DestinationAbstractRepository):
-            The data repository to load ECB rates into.
-        currencies (List[str]):
-            List of currency codes for which to fetch ECB rates.
-        source_repository (source_repository.SourceAbstractRepository):
-            The data repository to get ECB rates from.
+        destination_repository (destination_repository.AbstractDestinationRepository):
+            The data repository to load exchange rates into.
+        currency_pairs (list[model.CurrencyPair]):
+            List of currency pairs for which to fetch exchange rates.
+        source_repository (source_repository.AbstractSourceRepository):
+            The data repository to get exchange rates from.
     """
-    ecb_rates = source_repository.get_ecb_rates(currencies)
-    destination_repository.load_ecb_exchange_rates(ecb_rates)
+    exchange_rates = source_repository.get_exchange_rates(currency_pairs)
+    destination_repository.load_exchange_rates(exchange_rates)

@@ -1,4 +1,4 @@
-from src import source_repository, destination_repository, services
+from src import source_repository, destination_repository, services, model
 from src.utils.gcp_clients import create_bigquery_client
 
 
@@ -22,4 +22,8 @@ def function_entry_point(event, context):
     client = create_bigquery_client()
     bq_repository = destination_repository.BiqQueryDestinationRepository(client)
     ecb_api_caller = source_repository.EcbApiCaller(10)
-    services.source_ecb_exchange_rates(bq_repository, ["GBP", "USD"], ecb_api_caller)
+    currency_pairs = [
+        model.CurrencyPair("EUR", "GBP"),
+        model.CurrencyPair("EUR", "USD"),
+    ]
+    services.source_exchange_rates(bq_repository, currency_pairs, ecb_api_caller)

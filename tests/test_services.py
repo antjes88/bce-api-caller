@@ -1,32 +1,47 @@
-from src import services
-from src import model
 import os
+from typing import Tuple, List
+
+from src import services, model, destination_repository, source_repository
 
 
-def test_source_ecb_rates(repository_with_ecb_rates, fake_ecb_api):
+def test_source_exchange_rates(
+    repository_with_exchange_rates: Tuple[
+        destination_repository.BiqQueryDestinationRepository,
+        List[model.ExchangeRate],
+    ],
+    fake_ecb_api: Tuple[
+        source_repository.EcbApiCallerFake,
+        List[model.ExchangeRate],
+        List[model.CurrencyPair],
+    ],
+):
     """
     GIVEN a fake ecb api
-    WHEN we call the service source_ecb_rates()
+    WHEN we call the service source_exchange_rates()
     THEN the fake data sourced from the fake api should be loaded into the data repository
     """
-    fake_ecb_api_caller, expected_ecb_rates, currencies = fake_ecb_api
-    bq_repository, ECB_RATES = repository_with_ecb_rates
-    services.source_ecb_exchange_rates(bq_repository, currencies, fake_ecb_api_caller)
+    fake_ecb_api_caller, expected_exchange_rates, currency_pairs = fake_ecb_api
+    bq_repository, EXCHANGE_RATES = repository_with_exchange_rates
+    services.source_exchange_rates(bq_repository, currency_pairs, fake_ecb_api_caller)
 
-    expected_ecb_rates = expected_ecb_rates + ECB_RATES
+    expected_exchange_rates = expected_exchange_rates + EXCHANGE_RATES
 
     query_job = bq_repository.client.query(
         f"SELECT * FROM {os.environ['DATASET']}.{os.environ['DESTINATION_TABLE']}"
     )
     rows = query_job.result()
-    results_ecb_rates = []
+    results_exchange_rates = []
     for row in rows:
-        results_ecb_rates.append(
-            model.EcbExchangeRate(
-                row.date, row.exchange_rate, row.currency, row.creation_date
+        results_exchange_rates.append(
+            model.ExchangeRate(
+                date=row.date,
+                exchange_rate=row.exchange_rate,
+                currency_pair=model.CurrencyPair(row.base_currency, row.quote_currency),
+                source=row.source,
+                creation_date=row.creation_date,
             )
         )
 
-    assert len(expected_ecb_rates) == len(results_ecb_rates)
-    for ecb_rate in expected_ecb_rates:
-        assert ecb_rate in results_ecb_rates
+    assert len(expected_exchange_rates) == len(results_exchange_rates)
+    for exchange_rate in expected_exchange_rates:
+        assert exchange_rate in results_exchange_rates
