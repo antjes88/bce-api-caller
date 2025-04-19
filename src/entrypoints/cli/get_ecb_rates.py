@@ -1,9 +1,10 @@
 import os
 import click
+from typing import Tuple
 from src import source_repository, destination_repository, services, model
 from src.utils.gcp_clients import create_bigquery_client
 from src.utils.logs import default_module_logger
-from typing import Tuple
+
 
 logger = default_module_logger(__file__)
 

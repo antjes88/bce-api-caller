@@ -128,6 +128,9 @@ Before the Terraform code can be executed, ensure the following:
 1. **Cloud Function Service Account**:
     - Provide a Service Account for the Cloud Function with the following roles:
       - `roles/bigquery.jobUser`
+      - `roles/bigquery.dataEditor`
+      - `roles/cloudfunctions.invoker`
+      - `roles/run.invoker`
 
 2. **Terraform Execution Permissions**:
     - Either your user account or the Service Account used to run the Terraform code must have the following roles:

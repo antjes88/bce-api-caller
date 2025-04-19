@@ -60,7 +60,6 @@ resource "google_cloud_scheduler_job" "default" {
   }
 }
 
-
 resource "google_cloudfunctions2_function" "default" {
   name     = var.cloud_function_name
   location = var.region
