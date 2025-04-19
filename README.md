@@ -98,8 +98,60 @@ There are 2 CI/CD pipelines implemented as GitHub Actions:
 
 1. **Pytest**: This pipeline is defined in the `.github/workflows/pytest.yaml` file. It is triggered on every pull request, what runs unit tests using `pytest`. It also generates a test coverage report to ensure code quality. If any test fails, the pipeline will block the merge process, ensuring that only reliable code is integrated into the main branch. Finally, the pipeline requiress a pytest coverage over a given threshold. A Service Account granted with role `roles/bigquery.jobUser` is required. Current workflow, `.github/workflows/pytest.yaml`, is set to access GCP Project through Workload Identity Provider.
 
-2. **Deployment**: __UNDER DEVELOPMENT__
+2. **Deployment**: The deployment process is managed through two GitHub Actions workflows. The first workflow, `.github/workflows/terraform-validate.yaml`, validates the Terraform code and generates a deployment plan during a pull request, blocking merge in case of failures. The second workflow, `.github/workflows/terraform-apply.yaml`, executes after a merge to deploy the changes to Google Cloud Platform (GCP).
 
 ## Deployment implementation
 
-__UNDER DEVELOPMENT__
+The Terraform code in this repository automates the deployment of the Exchange Rate ingestion solution on Google Cloud Platform (GCP). It provisions and configures the necessary resources to ensure seamless ingestion and processing of data. 
+
+The Terraform code automates the deployment process by managing the following components:
+
+1. **Source Code Upload**: Uploads the source code zip file to the designated Cloud Function Source Code bucket.
+2. **Cloud Function Creation**: Provisions the Cloud Function that processes the exchange rates.
+3. **Pub/Sub Topic**: Creates a Pub/Sub topic to which the Cloud Function is subscribed.
+4. **Cloud Scheduler Job**: Configures a Cloud Scheduler job to publish a message to the Pub/Sub topic every day at 12:05 AM, ensuring the Cloud Function is executed on schedule.
+
+### Considerations
+
+The Terraform code is designed to be executed by the workflows defined in `.github/workflows/terraform-validate.yaml` and `.github/workflows/terraform-apply.yaml`. These workflows first package the source code into a zip file, which is then used as the source code for the Cloud Function during the Terraform execution.
+
+If you prefer to execute the Terraform code locally, you must first run the `.github/package_cfsrc.sh`* bash script. This script packages the source code into a zip file. Once the zip file is created, you can proceed with running `terraform plan` or `terraform apply`, providing the name of the zip file.
+
+A final consideration is that the backend for this solution is configured to reside in Google Cloud Storage (GCS). If you plan to reuse this code, ensure you update the backend bucket name accordingly.
+
+**This file must be executed at repo root folder.*
+
+### Prerequisites for Terraform Execution
+
+Before the Terraform code can be executed, ensure the following:
+
+1. **Cloud Function Service Account**:
+    - Provide a Service Account for the Cloud Function with the following roles:
+      - `roles/bigquery.jobUser`
+      - `roles/bigquery.dataEditor`
+      - `roles/cloudfunctions.invoker`
+      - `roles/run.invoker`
+
+2. **Terraform Execution Permissions**:
+    - Either your user account or the Service Account used to run the Terraform code must have the following roles:
+      - `roles/iam.serviceAccountUser` on the Service Account mentioned in the previous point.
+      - `roles/cloudfunctions.admin`
+      - `roles/storage.objectAdmin` on the _source code_, and _backend_ buckets.
+      - `roles/storage.insightsCollectorService`
+      - `roles/cloudscheduler.admin`
+      - `roles/pubsub.admin`
+
+To reuse the GitHub Action, follow these steps:
+
+1. **Create a Workload Identity Provider (WIP):**  
+   This enables keyless authentication for GitHub Actions.  
+   - [Learn why this is needed](https://cloud.google.com/blog/products/identity-security/enabling-keyless-authentication-from-github-actions).  
+   - [Follow these instructions](https://docs.github.com/en/actions/security-for-github-actions/security-hardening-your-deployments/configuring-openid-connect-in-google-cloud-platform).
+
+2. **Set up Service Account:**  
+   - Grant the Terraform Executor Service Account the necessary permissions to execute Terraform code as indicated before.
+   - Assign the role `roles/iam.workloadIdentityUser`.
+   - Set the Service Account as the principal for the Workload Identity Provider created in step 1.
+
+3. **Provide secrets:**
+    - `WORKLOAD_IDENTITY_PROVIDER` & `SERVICE_ACCOUNT_EMAIL` must be provided as Github Actions Secrets.

@@ -171,5 +171,4 @@ zip_to_cloud_function.zip
 .terraform/
 terraform.tfstate
 terraform.tfstate.backup
-terraform.tfvars
-.terraform.lock.hcl
+*/terraform.tfvars

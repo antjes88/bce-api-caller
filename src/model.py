@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import datetime as dt
 
 
@@ -43,7 +43,7 @@ class ExchangeRate:
     exchange_rate: float
     currency_pair: CurrencyPair
     source: str
-    creation_date: dt.datetime = dt.datetime.now()
+    creation_date: dt.datetime = field(default_factory=dt.datetime.now)
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, ExchangeRate):
