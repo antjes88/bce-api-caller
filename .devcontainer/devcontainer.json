@@ -1,13 +1,13 @@
 {
-    "name": "bce-api-caller",
+    "name": "exchange-rates-ingestion",
     "build": {
         "context": "..",
         "dockerfile": "./Dockerfile",
         "target": "devcontainer"
     },
     "remoteEnv": {
-        "PYTHONPATH": "/workspaces/bce-api-caller/src/entrypoints:${containerEnv:PYTHONPATH}",
-        "PATH": "/usr/app/google-cloud-sdk/bin:/workspaces/bce-api-caller/cli/bin:${containerEnv:PATH}",
+        "PYTHONPATH": "/workspaces/exchange-rates-ingestion/src/entrypoints:${containerEnv:PYTHONPATH}",
+        "PATH": "/usr/app/google-cloud-sdk/bin:/workspaces/exchange-rates-ingestion/cli/bin:${containerEnv:PATH}",
         "ISDEVCONTAINER": "true"
     },
     "postCreateCommand": "/usr/app/post_create_commands.sh",
