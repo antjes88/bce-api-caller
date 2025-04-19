@@ -81,6 +81,7 @@ resource "google_cloudfunctions2_function" "default" {
     timeout_seconds       = 539
     max_instance_count    = 1
     service_account_email = data.google_service_account.default.email
+    ingress_settings      = "ALLOW_INTERNAL_ONLY"
   }
 
   event_trigger {
