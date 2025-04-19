@@ -84,9 +84,10 @@ resource "google_cloudfunctions2_function" "default" {
   }
 
   event_trigger {
-    trigger_region = var.region
-    retry_policy   = "RETRY_POLICY_DO_NOT_RETRY"
-    event_type     = "google.cloud.pubsub.topic.v1.messagePublished"
-    pubsub_topic   = google_pubsub_topic.default.id
+    trigger_region        = var.region
+    retry_policy          = "RETRY_POLICY_DO_NOT_RETRY"
+    event_type            = "google.cloud.pubsub.topic.v1.messagePublished"
+    pubsub_topic          = google_pubsub_topic.default.id
+    service_account_email = data.google_service_account.default.email
   }
 }
