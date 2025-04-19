@@ -6,7 +6,7 @@ def function_entry_point(event, context):
     """
     Entry point function for ingesting ECB exchange rates into raw layer of the DW in BigQuery.
     This function initializes a BigQueryRepository and an EcbApiCaller, then calls a service to fetch and load ECB
-    rates into BigQuery.
+    exchange rates into BigQuery.
 
     Args:
          event: The dictionary with data specific to this type of event. The `@type` field maps to
