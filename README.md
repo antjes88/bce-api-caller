@@ -1,4 +1,4 @@
-# BCE API Caller
+# Exchange Rates Ingestion
 
 This repository provides a solution for fetching currency exchange rates. These exchange rates are ingested into a Data Warehouse (DW) layer, with the current implementation utilizing BigQuery as the DW and the European Central Bank (ECB) API as Source Repository. The repository includes tools, pipelines, and configurations designed to streamline the ingestion process while ensuring scalability and maintainability.
 
@@ -41,7 +41,7 @@ git config --global user.email "your github account email"
 
 ### Local Execution
 
-Local execution is enhanced by the use of the Python library `Click`, which allows the creation of Command Line Interfaces. To execute the solution locally, run the command `bce-api-caller` in a Bash terminal inside the devcontainer. This command will display a message listing the available arguments for performing different actions. You can explore additional details and options by using the `--help` flag.
+Local execution is enhanced by the use of the Python library `Click`, which allows the creation of Command Line Interfaces. To execute the solution locally, run the command `exchange-rates-ingestion` in a Bash terminal inside the devcontainer. This command will display a message listing the available arguments for performing different actions. You can explore additional details and options by using the `--help` flag.
 
 you need to provide a `.env` file at project root location with the following data:
 
@@ -71,7 +71,7 @@ Unit testing has been integrated into the CI/CD pipeline. A merge will not be ap
 
 The code architecture of the Python solution is illustrated below. We adopt Onion/Clean Architecture, so ensuring that our Business Logic (Domain Model) has no dependencies. Our goal is to follow SOLID principles, promoting seamless future changes and enhancing code clarity.
 
-The `src/entrypoints/cloud_function/main.py` file is used by the deployed solution as entrypoint, as required by GCP Cloud Functions. Locally, as described in the "Local Execution" section, code execution starts from the Python entrypoint located at `src/entrypoints/cli/__main__.py`. This entrypoint is invoked using the command `bce-api-caller` in a Bash terminal. 
+The `src/entrypoints/cloud_function/main.py` file is used by the deployed solution as entrypoint, as required by GCP Cloud Functions. Locally, as described in the "Local Execution" section, code execution starts from the Python entrypoint located at `src/entrypoints/cli/__main__.py`. This entrypoint is invoked using the command `exchange-rates-ingestion` in a Bash terminal. 
 
 Several entry points can be provided seamlessly because, following Clean Architecture principles, the `main.py` function is treated as the last detail. This ensures that none of the core solution code depends on the entry point; instead, the entry point depends on the core solution code. This design promotes flexibility and allows for the easy addition of new entry points without impacting the existing architecture. Which, in turn, means that the source is independent of the infrastructure. 
 

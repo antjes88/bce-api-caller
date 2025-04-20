@@ -1,9 +1,9 @@
 #!/bin/bash
 # shellcheck disable=SC1091,SC2059
 
-sed -i 's/\r$//' /workspaces/bce-api-caller/cli/bin/bce-api-caller
-chmod +x /workspaces/bce-api-caller/cli/bin/bce-api-caller
-git config --global --add safe.directory /workspaces/bce-api-caller
+sed -i 's/\r$//' /workspaces/exchange-rates-ingestion/cli/bin/exchange-rates-ingestion
+chmod +x /workspaces/exchange-rates-ingestion/cli/bin/exchange-rates-ingestion
+git config --global --add safe.directory /workspaces/exchange-rates-ingestion
 gcloud auth application-default login
 
 FILE="./.devcontainer/git_config.sh"
